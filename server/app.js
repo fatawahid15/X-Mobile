@@ -56,7 +56,7 @@ const server = new ApolloServer({
             });
           }
 
-          const user = await getUserByEmail(currentUser.email);
+          const user = await getUserByEmail(currentUser.username);
 
           if (!user) {
             throw new GraphQLError("You are not authenticated", {

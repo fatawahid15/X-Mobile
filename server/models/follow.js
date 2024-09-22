@@ -67,7 +67,6 @@ exports.removeFollow = async (data, userData) => {
   const userId = new ObjectId(data.userId);
   const currentUserId = new ObjectId(userData.user._id);
 
-  // Check if the target user exists
   const findUser = await db.collection(USER_COLLECTION).findOne({ _id: userId });
   if (!findUser) {
     throw new GraphQLError("User does not exist", {
@@ -78,13 +77,12 @@ exports.removeFollow = async (data, userData) => {
     });
   }
 
-  // Check if the current user is following the target user
+ 
   const checkFollow = await db
     .collection(FOLLOW_COLLECTION)
     .findOne({ followingId: userId, followerId: currentUserId });
 
   if (!checkFollow) {
-    // Change the condition to check if user is **not** following
     throw new GraphQLError("Not following this user", {
       extensions: {
         http: "400",
@@ -93,7 +91,6 @@ exports.removeFollow = async (data, userData) => {
     });
   }
 
-  // Proceed with unfollowing
   await db
     .collection(FOLLOW_COLLECTION)
     .deleteOne({ followingId: userId, followerId: currentUserId });
@@ -105,7 +102,7 @@ exports.removeFollow = async (data, userData) => {
 
 
 exports.follower = async (data) => {
-  const _id = new ObjectId(data._id); // The user being followed
+  const _id = new ObjectId(data._id);
   const db = await getDB();
 
   const result = await db
@@ -113,27 +110,27 @@ exports.follower = async (data) => {
   .aggregate([
     {
       $match: {
-        followerId: _id, // Match documents where the user is following others
+        followerId: _id, 
       },
     },
     {
       $lookup: {
         from: USER_COLLECTION, 
-        localField: "followingId", // Use followingId to find the user being followed
-        foreignField: "_id", // Match the user's _id in USER_COLLECTION
-        as: "User", // The resulting data will be in the "User" field (an array)
+        localField: "followingId",
+        foreignField: "_id", 
+        as: "User", 
       },
     },
     {
-      $unwind: "$User", // Flatten the "User" array to extract individual users
+      $unwind: "$User", 
     },
     {
       $project: {
-        _id: 0, // Exclude the follow relationship _id
-        followerId: 1, // Include the follower's ID
-        "User._id": 1, // Include the user ID from the joined User document
-        "User.name": 1, // Include the user's name
-        "User.username": 1, // Include the user's username
+        _id: 0,
+        followerId: 1,
+        "User._id": 1, 
+        "User.name": 1,
+        "User.username": 1, 
       },
     },
   ])
@@ -141,7 +138,7 @@ exports.follower = async (data) => {
 
   console.log(result);
 
-return result; // Returns an array of following user data
+return result; 
 
 };
 
@@ -155,27 +152,27 @@ exports.following = async (data) => {
   .aggregate([
     {
       $match: {
-        followingId: _id, // Match documents where the user is following others
+        followingId: _id, 
       },
     },
     {
       $lookup: {
         from: USER_COLLECTION, 
-        localField: "followerId", // Use followingId to find the user being followed
-        foreignField: "_id", // Match the user's _id in USER_COLLECTION
-        as: "User", // The resulting data will be in the "User" field (an array)
+        localField: "followerId", 
+        foreignField: "_id",
+        as: "User", 
       },
     },
     {
-      $unwind: "$User", // Flatten the "User" array to extract individual users
+      $unwind: "$User", 
     },
     {
       $project: {
-        _id: 0, // Exclude the follow relationship _id
-        followerId: 1, // Include the follower's ID
-        "User._id": 1, // Include the user ID from the joined User document
-        "User.name": 1, // Include the user's name
-        "User.username": 1, // Include the user's username
+        _id: 0,
+        followerId: 1,
+        "User._id": 1,
+        "User.name": 1,
+        "User.username": 1,
       },
     },
   ])
@@ -183,6 +180,6 @@ exports.following = async (data) => {
 
   console.log(result);
 
-return result; // Returns an array of following user data
+return result; 
 
 };

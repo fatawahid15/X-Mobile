@@ -14,10 +14,10 @@ exports.getUser = async () => {
   return result;
 };
 
-exports.getUserByEmail = async (email) => {
+exports.getUserByEmail = async (username) => {
   const db = await getDB();
   const result = await db.collection(USER_COLLECTION).findOne(
-    { email },
+    { username },
     {
       projection: {
         password: 0,

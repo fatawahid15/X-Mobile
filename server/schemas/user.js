@@ -90,9 +90,9 @@ const UserResolver = {
     userByEmail: async (_, args, contextValue) => {
       await contextValue.authentication();
 
-      const { email } = args;
+      const { username } = args;
 
-      const user = await getUserByEmail(email);
+      const user = await getUserByEmail(username);
 
       return {
         statusCode: 200,
