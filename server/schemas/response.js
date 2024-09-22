@@ -10,7 +10,7 @@ type UserMongoResponse implements Response {
     statusCode: String!
     message: String
     error: String
-    data: [UserResponse]
+    data: [UserResponse],
 }
 
 type UserRegisterResponse implements Response {
@@ -39,6 +39,7 @@ type UserLoginResponse implements Response {
     message: String
     error: String
     token: String
+    user: UserResponse
 }
 
 type UserSpecResponse implements Response {
@@ -48,11 +49,25 @@ type UserSpecResponse implements Response {
     user: UserResponse
 }
 
+type UserOneResponse implements Response {
+    statusCode: String!
+    message: String
+    error: String
+    data: UserIdResponse
+}
+
 type FollowMongoResponse implements Response {
     statusCode: String!
     message: String
     error: String
     data: [FollowResponse]
+}
+
+type FollowListResponse implements Response {
+    statusCode: String!
+    message: String
+    error: String
+    data: [FollowerFollowing]
 }
 
 type FollowMutation implements Response {

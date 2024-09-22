@@ -1,4 +1,4 @@
-require('dotenv').config()
+require("dotenv").config();
 const { ApolloServer } = require("@apollo/server");
 const { startStandaloneServer } = require("@apollo/server/standalone");
 const { GraphQLError } = require("graphql");
@@ -13,7 +13,7 @@ const { followTypeDef, FollowResolver } = require("./schemas/follow");
 const server = new ApolloServer({
   typeDefs: [userTypeDef, responseTypeDefs, postTypeDef, followTypeDef],
   resolvers: [UserResolver, PostResolver, FollowResolver],
-  introspection: true
+  introspection: true,
 });
 
 (async () => {
@@ -22,11 +22,7 @@ const server = new ApolloServer({
   const { url } = await startStandaloneServer(server, {
     listen: { port: process.env.PORT },
     context: async ({ req, res }) => {
-      console.log("Triggered on every request");
       return {
-        testing: () => {
-          console.log(req.headers.authorization);
-        },
         authentication: async () => {
           const { authorization } = req.headers;
 
@@ -72,8 +68,8 @@ const server = new ApolloServer({
           }
 
           return {
-            user
-          }
+            user,
+          };
         },
       };
     },

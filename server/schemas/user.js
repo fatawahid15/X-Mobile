@@ -4,6 +4,7 @@ const {
   addUser,
   loginUser,
   searchUser,
+  getUserById,
 } = require("../models/user");
 
 const userTypeDef = `#graphql
@@ -28,10 +29,20 @@ type UserResponse {
   email: String
 }
 
+type UserIdResponse {
+  _id: ID
+  name: String
+  username: String
+  email: String
+  following: [FollowResponse]
+  followers: [FollowResponse]
+}
+
 type Query {
   users: UserMongoResponse
   userByEmail(email: String!): UserSpecResponse
   userSearch(username: String): UserMongoResponse
+  userById(_id: ID!): UserOneResponse
 }
 
 type Mutation {
@@ -42,7 +53,8 @@ type Mutation {
 
 const UserResolver = {
   Query: {
-    users: async () => {
+    users: async (_, __, contextValue) => {
+      await contextValue.authentication();
       const user = await getUser();
       return {
         statusCode: 200,
@@ -51,12 +63,26 @@ const UserResolver = {
       };
     },
 
-    userSearch: async (_, args) => {
+    userSearch: async (_, args, contextValue) => {
+      await contextValue.authentication();
       const result = await searchUser(args);
 
       return {
         statusCode: 200,
         message: "success getting user",
+        data: result,
+      };
+    },
+
+    userById: async (_, args, contextValue) => {
+      await contextValue.authentication();
+      const result = await getUserById(args);
+
+      console.log(result);
+
+      return {
+        statusCode: 200,
+        message: "Success getting specified user",
         data: result,
       };
     },
@@ -88,10 +114,13 @@ const UserResolver = {
     userLogin: async (_, args) => {
       const result = await loginUser(args);
 
+      console.log(result);
+
       return {
         statusCode: "200",
         message: "Success Login!",
-        token: result,
+        token: result.token,
+        user: result.userData
       };
     },
   },

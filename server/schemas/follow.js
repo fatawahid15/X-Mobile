@@ -1,4 +1,4 @@
-const { getFollow, addFollow } = require("../models/follow");
+const { getFollow, addFollow, follower, following } = require("../models/follow");
 
 const followTypeDef = `#graphql
 interface Follow {
@@ -16,8 +16,21 @@ type FollowResponse implements Follow {
     updatedAt: String
 }
 
+type FollowerFollowing {
+  _id: ID
+  User: UserResponse
+}
+
+type UserResponse {
+  _id: ID
+  name: String
+  username: String
+}
+
 type Query {
     follow: FollowMongoResponse
+    follower(_id: ID!): FollowListResponse
+    following(_id: ID!): FollowListResponse
 }
 
 type Mutation {
@@ -28,7 +41,8 @@ type Mutation {
 
 const FollowResolver = {
   Query: {
-    follow: async () => {
+    follow: async (_, __, contextValue) => {
+      await contextValue.authentication();
       const result = await getFollow();
 
       return {
@@ -37,6 +51,27 @@ const FollowResolver = {
         data: result,
       };
     },
+    follower: async (_, args, contextValue) => {
+      await contextValue.authentication()
+      const result = await follower(args)
+      return {
+        statusCode: 200,
+        message: "Success getting all follow data",
+        data: result,
+      }
+    },
+    following: async (_, args, contextValue) => {
+      await contextValue.authentication()
+      const result = await following(args)
+
+      console.log(result);
+
+      return {
+        statusCode: 200,
+        message: "Success getting all follow data",
+        data: result,
+      }
+    }
   },
   Mutation: {
     addFollow: async (_, args, contextValue) => {

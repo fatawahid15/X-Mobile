@@ -5,6 +5,7 @@ const { hash, compare } = require("../helpers/bcrypt");
 const { signToken } = require("../helpers/jwt");
 const { GraphQLError } = require("graphql");
 const USER_COLLECTION = process.env.USER_COLLECTION;
+const FOLLOW_COLLECTION = process.env.FOLLOW_COLLECTION;
 
 exports.getUser = async () => {
   const db = await getDB();
@@ -34,10 +35,29 @@ exports.addUser = async (data) => {
 
   const findUser = await db.collection(USER_COLLECTION).findOne({ username });
   if (findUser) {
-    throw new GraphQLError("Invalid username/password", {
+    throw new GraphQLError("Username already exist", {
       extensions: {
-        http: "401",
-        code: "UNAUTHENTICATED",
+        http: "400",
+        code: "BAD_REQUEST",
+      },
+    });
+  }
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    throw new GraphQLError("Invalid email format", {
+      extensions: {
+        http: "400",
+        code: "BAD_REQUEST",
+      },
+    });
+  }
+
+  if (password.length < 5) {
+    throw new GraphQLError("Password must be at least 5 characters long", {
+      extensions: {
+        http: "400",
+        code: "BAD_REQUEST",
       },
     });
   }
@@ -75,9 +95,15 @@ exports.loginUser = async (data) => {
     email: user.email,
   };
 
+  const userData = {
+    _id: user._id,
+    username: user.username,
+    email: user.email,
+  }
+
   const token = signToken(payload);
 
-  return token;
+  return {userData, token}
 };
 
 exports.searchUser = async (data) => {
@@ -90,4 +116,43 @@ exports.searchUser = async (data) => {
     .toArray();
 
   return user;
+};
+
+exports.getUserById = async (data) => {
+  const _id = new ObjectId(data._id);
+  const db = await getDB();
+
+  const result = await db
+    .collection(USER_COLLECTION)
+    .aggregate([
+      {
+        $lookup: {
+          from: FOLLOW_COLLECTION,
+          localField: "_id", 
+          foreignField: "followerId", 
+          as: "following", 
+        },
+      },
+      {
+        $match: {
+          _id,
+        },
+      },
+      {
+        $lookup: {
+          from: FOLLOW_COLLECTION,
+          localField: "_id", 
+          foreignField: "followingId", 
+          as: "followers", 
+        },
+      },
+      {
+        $project: {
+          password: 0
+        }
+      }
+    ])
+    .next();
+
+    return result
 };

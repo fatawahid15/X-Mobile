@@ -109,3 +109,86 @@ exports.removeFollow = async (data, userData) => {
 
   return message;
 };
+
+exports.follower = async (data) => {
+  const _id = new ObjectId(data._id); // The user being followed
+  const db = await getDB();
+
+  const result = await db
+  .collection(FOLLOW_COLLECTION)
+  .aggregate([
+    {
+      $match: {
+        followerId: _id, // Match documents where the user is following others
+      },
+    },
+    {
+      $lookup: {
+        from: USER_COLLECTION, 
+        localField: "followingId", // Use followingId to find the user being followed
+        foreignField: "_id", // Match the user's _id in USER_COLLECTION
+        as: "User", // The resulting data will be in the "User" field (an array)
+      },
+    },
+    {
+      $unwind: "$User", // Flatten the "User" array to extract individual users
+    },
+    {
+      $project: {
+        _id: 0, // Exclude the follow relationship _id
+        followerId: 1, // Include the follower's ID
+        "User._id": 1, // Include the user ID from the joined User document
+        "User.name": 1, // Include the user's name
+        "User.username": 1, // Include the user's username
+      },
+    },
+  ])
+  .toArray();
+
+  console.log(result);
+
+return result; // Returns an array of following user data
+
+};
+
+
+exports.following = async (data) => {
+  const _id = new ObjectId(data._id);
+  const db = await getDB();
+
+  const result = await db
+  .collection(FOLLOW_COLLECTION)
+  .aggregate([
+    {
+      $match: {
+        followingId: _id, // Match documents where the user is following others
+      },
+    },
+    {
+      $lookup: {
+        from: USER_COLLECTION, 
+        localField: "followerId", // Use followingId to find the user being followed
+        foreignField: "_id", // Match the user's _id in USER_COLLECTION
+        as: "User", // The resulting data will be in the "User" field (an array)
+      },
+    },
+    {
+      $unwind: "$User", // Flatten the "User" array to extract individual users
+    },
+    {
+      $project: {
+        _id: 0, // Exclude the follow relationship _id
+        followerId: 1, // Include the follower's ID
+        "User._id": 1, // Include the user ID from the joined User document
+        "User.name": 1, // Include the user's name
+        "User.username": 1, // Include the user's username
+      },
+    },
+  ])
+  .toArray();
+
+  console.log(result);
+
+return result; // Returns an array of following user data
+
+};
