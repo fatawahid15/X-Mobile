@@ -65,50 +65,44 @@ exports.removeFollow = async (data, userData) => {
   const db = await getDB();
 
   const userId = new ObjectId(data.userId);
-
   const currentUserId = new ObjectId(userData.user._id);
 
-  const findUser = await db
-    .collection(USER_COLLECTION)
-    .findOne({ _id: userId });
-
+  // Check if the target user exists
+  const findUser = await db.collection(USER_COLLECTION).findOne({ _id: userId });
   if (!findUser) {
-    throw new GraphQLError("User Not exist", {
+    throw new GraphQLError("User does not exist", {
       extensions: {
         http: "404",
-        code: "NOT FOUND",
+        code: "NOT_FOUND",
       },
     });
   }
 
+  // Check if the current user is following the target user
   const checkFollow = await db
     .collection(FOLLOW_COLLECTION)
     .findOne({ followingId: userId, followerId: currentUserId });
 
-  console.log(checkFollow);
-
-  if (checkFollow) {
-    throw new GraphQLError("Already followed", {
+  if (!checkFollow) {
+    // Change the condition to check if user is **not** following
+    throw new GraphQLError("Not following this user", {
       extensions: {
-        http: "404",
-        code: "NOT FOUND",
+        http: "400",
+        code: "BAD_REQUEST",
       },
     });
   }
 
-  const newFollow = {
-    followingId: userId,
-    followerId: currentUserId,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  };
+  // Proceed with unfollowing
+  await db
+    .collection(FOLLOW_COLLECTION)
+    .deleteOne({ followingId: userId, followerId: currentUserId });
 
-  await db.collection(FOLLOW_COLLECTION).deleteOne(newFollow);
-
-  const message = "Success unfollow user";
+  const message = "Successfully unfollowed user";
 
   return message;
 };
+
 
 exports.follower = async (data) => {
   const _id = new ObjectId(data._id); // The user being followed
